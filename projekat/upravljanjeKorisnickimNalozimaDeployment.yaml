@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+  korisnickiNaloziDB:
+    image: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+    ports:
+      - 3307:3306
+    volumes:
+      - authenticationData:/var/lib/mysql
+    networks:
+      - authenticationNetwork
+  pocetnoPopunjavanjeBaze:
+    image: pocetno_popunjavanje_baze
+    environment:
+      - DATABASE_ADDRESS=korisnickiNaloziDB
+    depends_on:
+      korisnickiNaloziDB:
+        condition: service_healthy
+    networks:
+      - authenticationNetwork
+  radSaKorisnickimNalozima:
+    image: rad_sa_korisnickim_nalozima
+    environment:
+      - DATABASE_ADDRESS=korisnickiNaloziDB
+    depends_on:
+      - pocetnoPopunjavanjeBaze
+    ports:
+      - 5000:5000
+    networks:
+      - authenticationNetwork
+  adminerAuthentication:
+    image: adminer
+    ports:
+      - 8080:8080
+    networks:
+      - authenticationNetwork
+
+volumes:
+  authenticationData:
+
+networks:
+  authenticationNetwork:
+
